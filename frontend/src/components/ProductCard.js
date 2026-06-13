@@ -6,17 +6,18 @@ const ProductCard = ({ product, addedItems, onAddToCart }) => {
   const isAdded = addedItems.includes(product.id);
 
   return (
-    <div
-      className={`bg-white rounded-xl shadow-sm p-4 flex flex-col justify-between
-        transition-all duration-300 transform
-        hover:shadow-xl hover:-translate-y-1 hover:scale-[1.02]
-        ${isAdded ? 'opacity-80' : ''}`}
-    >
-      {/* Image */}
-      <div className="w-full h-36 bg-gray-100 rounded-md mb-3 overflow-hidden">
+    <div className={`relative rounded-2xl p-4 flex flex-col justify-between
+      bg-white border border-gray-100 shadow-sm
+      transition-all duration-300
+      hover:shadow-xl hover:-translate-y-1 hover:scale-[1.02]
+      ${isAdded ? 'opacity-80' : ''}`}>
+
+      {/* IMAGE */}
+      <div className="w-full h-40 rounded-xl mb-3 overflow-hidden bg-gray-100 border border-gray-100">
+
         {product.image ? (
           <img
-            src={product.image} // make sure this matches your backend field
+            src={product.image}
             alt={product.name}
             className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
           />
@@ -25,39 +26,64 @@ const ProductCard = ({ product, addedItems, onAddToCart }) => {
             No Image
           </div>
         )}
+
       </div>
 
-      {/* Info */}
+      {/* INFO */}
       <div className="space-y-1">
-        <h3 className="text-gray-800 font-semibold text-sm">{product.name}</h3>
-        <p className="text-gray-500 text-xs line-clamp-2">{product.description || 'No description available'}</p>
-        <p className="text-primary font-bold text-sm">Ksh {product.price?.toLocaleString()}</p>
+
+        <h3 className="text-gray-800 font-semibold text-base hover:text-blue-600 transition">
+          {product.name}
+        </h3>
+
+        <p className="text-gray-500 text-xs line-clamp-2">
+          {product.description || 'No description available'}
+        </p>
+
+        <p className="text-blue-600 font-bold text-sm">
+          Ksh {product.price?.toLocaleString()}
+        </p>
+
       </div>
 
-      {/* Buttons */}
-      <div className="mt-3 space-y-2">
-        {/* View Details */}
+      {/* DETAILS */}
+      <div className="mt-2 text-[11px] text-gray-500 space-y-1">
+
+        {product.brand && <p>Brand: {product.brand}</p>}
+        {product.category && <p>Category: {product.category}</p>}
+        {product.stock !== undefined && <p>Stock: {product.stock}</p>}
+
+      </div>
+
+      {/* BUTTONS */}
+      <div className="mt-4 space-y-2">
+
+        {/* VIEW DETAILS */}
         <button
           onClick={() => navigate(`/products/${product.id}`)}
-          className="w-full py-2 rounded-md border border-blue-600 text-blue-600 text-sm font-medium
-                     transition-all duration-200
-                     hover:bg-blue-600 hover:text-white hover:scale-[1.03]"
+          className="w-full py-2 rounded-lg
+          bg-blue-50 border border-blue-200
+          text-blue-600 text-sm font-medium
+          transition-all duration-200
+          hover:bg-blue-600 hover:text-white hover:shadow-md"
         >
           View Details
         </button>
 
-        {/* Add to Cart */}
+        {/* ADD TO CART */}
         <button
           onClick={() => onAddToCart(product.id)}
-          className={`w-full py-2 rounded-md text-sm font-medium transition-all duration-200
-            ${isAdded
-              ? 'bg-green-500 text-white'
-              : 'bg-blue-600 text-white hover:bg-blue-700 hover:scale-[1.03]'
-            }`}
+          className={`w-full py-2 rounded-lg text-sm font-medium transition-all duration-200
+          ${isAdded
+            ? 'bg-green-500 text-white'
+            : 'bg-gray-900 text-white hover:bg-gray-800'
+          }`}
         >
           {isAdded ? '✔ Added' : 'Add to Cart'}
         </button>
+
       </div>
+
     </div>
   );
 };

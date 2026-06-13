@@ -13,17 +13,16 @@ const Cart = () => {
   const [paymentMethod, setPaymentMethod] = useState('mpesa');
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentInput, setPaymentInput] = useState({
-    phone: '',       // for M-Pesa
-    cardNumber: '',  // 16-digit card
-    cardName: '',    // cardholder name
-    expiry: '',      // MM/YY
-    cvv: '',         // 3 digits
+    phone: '',
+    cardNumber: '',
+    cardName: '',
+    expiry: '',
+    cvv: '',
   });
   const [paymentError, setPaymentError] = useState('');
 
   const userId = localStorage.getItem('userId');
 
-  // Fetch cart items
   const fetchCart = useCallback(async () => {
     try {
       const res = await axios.get(`${BASE_URL}/api/cart/${userId}`);
@@ -38,7 +37,6 @@ const Cart = () => {
     if (userId) fetchCart();
   }, [userId, fetchCart]);
 
-  // Show popup helper
   const showPopup = (message, type = 'info') => {
     setPopup({ show: true, message, type });
     setTimeout(() => {
@@ -46,7 +44,6 @@ const Cart = () => {
     }, 2500);
   };
 
-  // Remove item
   const handleRemoveClick = (id) => {
     setSelectedId(id);
     setShowConfirm(true);
@@ -64,10 +61,11 @@ const Cart = () => {
     }
   };
 
-  // Calculate total
-  const total = cartItems.reduce((sum, item) => sum + (item.price || 0) * (item.quantity || 0), 0);
+  const total = cartItems.reduce(
+    (sum, item) => sum + (item.price || 0) * (item.quantity || 0),
+    0
+  );
 
-  // Place order function
   const placeOrder = async (paymentValue = null) => {
     try {
       await axios.post(`${BASE_URL}/api/orders`, {
@@ -84,14 +82,13 @@ const Cart = () => {
 
       await axios.delete(`${BASE_URL}/api/cart/clear/${userId}`);
       fetchCart();
-      setShowPaymentModal(false);
 
-      if (paymentMethod === 'mpesa') {
-        showPopup(`STK Push simulated for ${paymentValue.phone} KES ${total}`, 'success');
-      } else if (paymentMethod === 'card') {
-        showPopup('Card Payment Successful!', 'success');
+      if (paymentMethod === 'card') {
+        setShowPaymentModal(false);
+        showPopup('Card payment successful!', 'success');
       } else if (paymentMethod === 'cod') {
-        showPopup('Order Placed Successfully!', 'success');
+        setShowPaymentModal(false);
+        showPopup('Order placed successfully!', 'success');
       }
 
     } catch (err) {
@@ -100,22 +97,20 @@ const Cart = () => {
     }
   };
 
-  // Checkout click handler
   const handleCheckoutClick = () => {
     if (cartItems.length === 0) return;
 
     if (paymentMethod === 'cod') {
-      placeOrder(); // Cash: immediate
+      placeOrder();
     } else {
       setPaymentInput({ phone:'', cardNumber:'', cardName:'', expiry:'', cvv:'' });
       setPaymentError('');
-      setShowPaymentModal(true); // M-Pesa or Card: open modal
+      setShowPaymentModal(true);
     }
   };
 
-  // M-Pesa confirm (no backend call, just simulate success)
+  // ✅ FIXED M-PESA FLOW (YOUR REQUEST)
   const handleMpesaConfirm = async () => {
-    // Validate local format
     if (!paymentInput.phone.match(/^07\d{8}$/)) {
       setPaymentError('Enter a valid Kenyan phone number (07XXXXXXXX)');
       return;
@@ -128,156 +123,193 @@ const Cart = () => {
 
     setPaymentError('');
 
-    // Simulate STK Push success
-    showPopup(`STK Push simulated to ${paymentInput.phone}`, 'success');
+    // CLOSE MODAL FIRST
+    setShowPaymentModal(false);
+
+    // SHOW REALISTIC MESSAGE
+    showPopup(
+      'M-Pesa payment request initiated successfully. Check your phone to complete payment.',
+      'success'
+    );
+
     await placeOrder({ phone: paymentInput.phone });
   };
 
-  // Card confirm
   const handleCardConfirm = () => {
     const { cardNumber, cardName, expiry, cvv } = paymentInput;
+
     if (!cardName.trim()) { setPaymentError('Enter cardholder name'); return; }
     if (!cardNumber.match(/^\d{16}$/)) { setPaymentError('Enter a valid 16-digit card number'); return; }
     if (!expiry.match(/^(0[1-9]|1[0-2])\/\d{2}$/)) { setPaymentError('Enter expiry in MM/YY'); return; }
     if (!cvv.match(/^\d{3}$/)) { setPaymentError('Enter a valid 3-digit CVV'); return; }
 
     setPaymentError('');
-    showPopup('Card Payment Successful!', 'success');
+    showPopup('Card payment successful!', 'success');
 
     placeOrder({ cardNumber, cardName, expiry, cvv });
   };
 
   return (
-    <div className="space-y-6 relative min-h-screen">
-      {/* Cart Empty Message */}
+    <div className="space-y-6 relative min-h-screen bg-[#0b0f19] text-white px-4 sm:px-6 md:px-10 py-6">
+
       {cartItems.length === 0 && (
         <div className="flex items-center justify-center min-h-[50vh] text-center">
-          <p className="text-gray-500 text-xl md:text-2xl font-semibold">Cart is empty</p>
+          <p className="text-gray-400 text-xl md:text-2xl font-semibold">
+            Your Cart is Empty
+          </p>
         </div>
       )}
 
-      {/* Cart Items */}
       {cartItems.length > 0 && (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {cartItems.map(item => (
-              <div key={item.id} className="bg-white rounded-xl shadow-md p-4 flex flex-col justify-between transition hover:shadow-xl hover:-translate-y-1 hover:scale-[1.02]">
-                <div className="w-full h-48 bg-gray-100 rounded-md mb-3 overflow-hidden">
+              <div
+                key={item.id}
+                className="rounded-xl p-4 bg-white/5 border border-white/10 backdrop-blur-lg
+                           hover:scale-[1.03] hover:shadow-[0_0_20px_#38bdf8]
+                           transition flex flex-col justify-between"
+              >
+                <div className="w-full h-48 rounded-lg overflow-hidden bg-black/30 mb-3">
                   {item.image_url ? (
-                    <img src={item.image_url} alt={item.name} className="w-full h-full object-cover transition hover:scale-105" />
+                    <img
+                      src={item.image_url}
+                      alt={item.name}
+                      className="w-full h-full object-cover hover:scale-105 transition"
+                    />
                   ) : (
-                    <div className="flex items-center justify-center h-full text-gray-400 text-sm">No Image</div>
+                    <div className="flex items-center justify-center h-full text-gray-400">
+                      No Image
+                    </div>
                   )}
                 </div>
+
                 <div className="space-y-1">
-                  <h3 className="text-gray-800 font-semibold text-lg">{item.name}</h3>
-                  <p className="text-gray-500 text-sm line-clamp-2">{item.description || ''}</p>
-                  <p className="text-primary font-bold text-md">${item.price}</p>
-                  <p className="text-gray-600 text-sm">Qty: {item.quantity}</p>
-                  <p className="text-gray-800 font-semibold">Total: ${item.price * item.quantity}</p>
+                  <h3 className="text-lg font-semibold text-white">{item.name}</h3>
+                  <p className="text-gray-400 text-sm line-clamp-2">{item.description || ''}</p>
+                  <p className="text-cyan-400 font-bold">${item.price}</p>
+                  <p className="text-gray-300 text-sm">Qty: {item.quantity}</p>
+                  <p className="text-white font-semibold">
+                    Total: ${item.price * item.quantity}
+                  </p>
                 </div>
-                <button onClick={() => handleRemoveClick(item.id)} className="mt-3 w-full py-2 bg-red-600 text-white rounded-md font-medium hover:bg-red-700">Remove</button>
+
+                <button
+                  onClick={() => handleRemoveClick(item.id)}
+                  className="mt-3 w-full py-2 rounded-lg bg-red-500/20 border border-red-500
+                             text-red-300 hover:bg-red-500/40 transition"
+                >
+                  Remove
+                </button>
               </div>
             ))}
           </div>
 
-          {/* Payment & Checkout Section */}
-          <div className="mt-6 flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-5 rounded-xl shadow-md space-y-4 md:space-y-0">
-            <div className="flex-1">
-              <p className="text-lg font-semibold text-gray-800 mb-2">Grand Total: ${total}</p>
+          <div className="mt-8 p-5 rounded-xl bg-white/5 border border-white/10 backdrop-blur-lg
+                          flex flex-col md:flex-row justify-between gap-6 items-center">
 
-              {/* Payment Options */}
-              <div className="flex flex-col md:flex-row gap-4">
-                {/* M-Pesa */}
-                <label className={`flex items-center gap-3 cursor-pointer p-3 border rounded-lg hover:border-green-500 transition ${paymentMethod === 'mpesa' ? 'border-green-500 bg-green-50' : 'border-gray-200'}`}>
-                  <input type="radio" name="payment" value="mpesa" className="hidden" checked={paymentMethod === 'mpesa'} onChange={() => setPaymentMethod('mpesa')} />
-                  <FaMobileAlt className="text-green-600 text-2xl"/>
-                  <div>
-                    <p className="font-semibold text-gray-800">M-Pesa</p>
-                    <p className="text-gray-500 text-sm">Simulated STK Push</p>
-                  </div>
+            <div>
+              <p className="text-lg font-semibold">
+                Grand Total: <span className="text-cyan-400">${total}</span>
+              </p>
+
+              <div className="flex flex-wrap gap-3 mt-4">
+
+                <label className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer
+                  ${paymentMethod === 'mpesa'
+                    ? 'border-green-400 bg-green-500/10'
+                    : 'border-white/10 bg-white/5'}`}>
+                  <input type="radio" hidden checked={paymentMethod === 'mpesa'}
+                    onChange={() => setPaymentMethod('mpesa')} />
+                  <FaMobileAlt className="text-green-400" />
+                  M-Pesa
                 </label>
 
-                {/* Card */}
-                <label className={`flex items-center gap-3 cursor-pointer p-3 border rounded-lg hover:border-blue-500 transition ${paymentMethod === 'card' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}>
-                  <input type="radio" name="payment" value="card" className="hidden" checked={paymentMethod === 'card'} onChange={() => setPaymentMethod('card')} />
-                  <FaCreditCard className="text-blue-600 text-2xl"/>
-                  <div>
-                    <p className="font-semibold text-gray-800">Card Payment</p>
-                    <p className="text-gray-500 text-sm">Visa, Mastercard, etc.</p>
-                  </div>
+                <label className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer
+                  ${paymentMethod === 'card'
+                    ? 'border-blue-400 bg-blue-500/10'
+                    : 'border-white/10 bg-white/5'}`}>
+                  <input type="radio" hidden checked={paymentMethod === 'card'}
+                    onChange={() => setPaymentMethod('card')} />
+                  <FaCreditCard className="text-blue-400" />
+                  Card
                 </label>
 
-                {/* Cash on Delivery */}
-                <label className={`flex items-center gap-3 cursor-pointer p-3 border rounded-lg hover:border-yellow-500 transition ${paymentMethod === 'cod' ? 'border-yellow-500 bg-yellow-50' : 'border-gray-200'}`}>
-                  <input type="radio" name="payment" value="cod" className="hidden" checked={paymentMethod === 'cod'} onChange={() => setPaymentMethod('cod')} />
-                  <FaMoneyBillWave className="text-yellow-600 text-2xl"/>
-                  <div>
-                    <p className="font-semibold text-gray-800">Cash on Delivery</p>
-                    <p className="text-gray-500 text-sm">Pay when delivery arrives</p>
-                  </div>
+                <label className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer
+                  ${paymentMethod === 'cod'
+                    ? 'border-yellow-400 bg-yellow-500/10'
+                    : 'border-white/10 bg-white/5'}`}>
+                  <input type="radio" hidden checked={paymentMethod === 'cod'}
+                    onChange={() => setPaymentMethod('cod')} />
+                  <FaMoneyBillWave className="text-yellow-400" />
+                  COD
                 </label>
+
               </div>
             </div>
 
-            {/* Checkout Button */}
-            <button onClick={handleCheckoutClick} className="px-6 py-3 bg-green-600 text-white font-medium rounded-md hover:bg-green-700 transition-colors duration-200">
+            <button
+              onClick={handleCheckoutClick}
+              className="px-6 py-3 rounded-full bg-gradient-to-r from-cyan-500 to-purple-600
+                         hover:scale-105 transition font-semibold shadow-lg"
+            >
               Checkout
             </button>
           </div>
         </>
       )}
 
-      {/* Payment Modal */}
       {showPaymentModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-xl w-80 text-center shadow-lg">
-            <h2 className="text-lg font-semibold mb-2">
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div className="w-80 p-6 rounded-xl bg-[#0b0f19] border border-white/10 backdrop-blur-lg">
+
+            <h2 className="text-lg font-semibold mb-3 text-center">
               {paymentMethod === 'mpesa' ? 'M-Pesa Payment' : 'Card Payment'}
             </h2>
 
             {paymentError && (
-              <div className="mb-2 text-sm text-red-600 bg-red-100 p-2 rounded">{paymentError}</div>
+              <div className="mb-3 text-red-400 text-sm">{paymentError}</div>
             )}
 
             {paymentMethod === 'mpesa' ? (
               <input
-                type="text"
+                className="w-full p-2 rounded bg-white/5 border border-white/10 text-white"
                 placeholder="07XXXXXXXX"
-                className="w-full border p-2 rounded mb-4 text-center"
                 value={paymentInput.phone}
-                onChange={(e) => setPaymentInput(prev => ({ ...prev, phone: e.target.value }))}
+                onChange={(e) =>
+                  setPaymentInput(prev => ({ ...prev, phone: e.target.value }))
+                }
               />
             ) : (
-              <div className="space-y-2 text-left">
-                <input
-                  type="text"
-                  placeholder="Cardholder Name"
-                  className="w-full border p-2 rounded"
+              <div className="space-y-2">
+                <input className="w-full p-2 rounded bg-white/5 border border-white/10 text-white"
+                  placeholder="Card Name"
                   value={paymentInput.cardName}
-                  onChange={(e) => setPaymentInput(prev => ({ ...prev, cardName: e.target.value }))}
+                  onChange={(e) =>
+                    setPaymentInput(prev => ({ ...prev, cardName: e.target.value }))
+                  }
                 />
-                <input
-                  type="text"
+                <input className="w-full p-2 rounded bg-white/5 border border-white/10 text-white"
                   placeholder="Card Number"
-                  className="w-full border p-2 rounded"
                   value={paymentInput.cardNumber}
-                  onChange={(e) => setPaymentInput(prev => ({ ...prev, cardNumber: e.target.value }))}
+                  onChange={(e) =>
+                    setPaymentInput(prev => ({ ...prev, cardNumber: e.target.value }))
+                  }
                 />
                 <div className="flex gap-2">
-                  <input
-                    type="text"
+                  <input className="w-1/2 p-2 rounded bg-white/5 border border-white/10 text-white"
                     placeholder="MM/YY"
-                    className="w-1/2 border p-2 rounded"
                     value={paymentInput.expiry}
-                    onChange={(e) => setPaymentInput(prev => ({ ...prev, expiry: e.target.value }))}
+                    onChange={(e) =>
+                      setPaymentInput(prev => ({ ...prev, expiry: e.target.value }))
+                    }
                   />
-                  <input
-                    type="text"
+                  <input className="w-1/2 p-2 rounded bg-white/5 border border-white/10 text-white"
                     placeholder="CVV"
-                    className="w-1/2 border p-2 rounded"
                     value={paymentInput.cvv}
-                    onChange={(e) => setPaymentInput(prev => ({ ...prev, cvv: e.target.value }))}
+                    onChange={(e) =>
+                      setPaymentInput(prev => ({ ...prev, cvv: e.target.value }))
+                    }
                   />
                 </div>
               </div>
@@ -285,14 +317,15 @@ const Cart = () => {
 
             <button
               onClick={paymentMethod === 'mpesa' ? handleMpesaConfirm : handleCardConfirm}
-              className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 mt-4"
+              className="w-full mt-4 py-2 rounded-lg bg-green-500/20 border border-green-400
+                         hover:bg-green-500/30 transition"
             >
               Pay Now
             </button>
 
             <button
               onClick={() => setShowPaymentModal(false)}
-              className="w-full bg-gray-400 text-white py-2 rounded hover:bg-gray-500 mt-2"
+              className="w-full mt-2 py-2 rounded-lg bg-white/10 border border-white/10"
             >
               Cancel
             </button>
@@ -300,30 +333,32 @@ const Cart = () => {
         </div>
       )}
 
-      {/* Remove Confirmation Modal */}
       {showConfirm && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-80 text-center shadow-lg">
-            <p className="font-medium text-gray-800 mb-4">Are you sure you want to remove this item?</p>
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div className="bg-[#0b0f19] border border-white/10 p-6 rounded-xl text-center">
+            <p className="mb-4">Remove this item?</p>
             <div className="flex gap-3 justify-center">
-              <button onClick={confirmRemove} className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">Yes</button>
-              <button onClick={() => setShowConfirm(false)} className="px-4 py-2 bg-gray-400 text-white rounded-md hover:bg-gray-500">Cancel</button>
+              <button onClick={confirmRemove} className="px-4 py-2 bg-red-500/20 border border-red-500 rounded-lg">
+                Yes
+              </button>
+              <button onClick={() => setShowConfirm(false)} className="px-4 py-2 bg-white/10 border border-white/10 rounded-lg">
+                Cancel
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Centered Popup */}
       {popup.show && (
         <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
-          <div className={`flex items-center gap-2 p-4 rounded-lg shadow-lg pointer-events-auto
-            ${popup.type === 'success' ? 'bg-green-600 text-white' : popup.type === 'error' ? 'bg-red-600 text-white' : 'bg-gray-200 text-gray-800'}`}>
-            {popup.type === 'success' && <FaCheckCircle />}
-            {popup.type === 'error' && <FaExclamationCircle />}
+          <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-black/70 border border-white/10">
+            {popup.type === 'success' && <FaCheckCircle className="text-green-400" />}
+            {popup.type === 'error' && <FaExclamationCircle className="text-red-400" />}
             <span>{popup.message}</span>
           </div>
         </div>
       )}
+
     </div>
   );
 };

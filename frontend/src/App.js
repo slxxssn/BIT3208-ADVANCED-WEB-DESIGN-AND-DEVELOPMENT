@@ -5,7 +5,7 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-route
 import Header from './components/Header';
 import Footer from './components/Footer';
 import SearchBar from './components/SearchBar';
-import BackForwardButtons from './components/BackForwardButtons';
+// import BackForwardButtons from './components/BackForwardButtons'; // ❌ disabled (hidden, not deleted)
 
 import HomePage from './pages/HomePage';
 import SearchResultsPage from './pages/SearchResultsPage';
@@ -19,7 +19,7 @@ import ProfilePage from './pages/ProfilePage';
 import OrdersPage from './pages/OrdersPage';
 import GoogleSuccessPage from './pages/GoogleSuccessPage';
 import SettingsPage from './pages/SettingsPage'; 
-import AccountPage from './pages/AccountPage'; // ✅ Added AccountPage import
+import AccountPage from './pages/AccountPage';
 
 import OTPVerificationPage from './pages/OtpVerificationPage';
 import SetPasswordPage from './pages/SetPasswordPage';
@@ -42,11 +42,13 @@ const Layout = ({ children }) => {
         resetHistory={resetHistory}
       />
 
+      {/* ❌ BackForwardButtons removed (temporarily disabled)
       <BackForwardButtons
         key={resetKey}
         onLogoutRequest={() => setShowLogoutModal(true)}
         resetHistory={resetHistory}
       />
+      */}
 
       {showGlobalSearch && <SearchBar />}
       {children}
@@ -95,7 +97,7 @@ function App() {
 
           {/* Settings & Account pages */}
           <Route path="/settings" element={<SettingsPage />} /> 
-          <Route path="/settings/account" element={<AccountPage />} /> {/* ✅ Account page route */}
+          <Route path="/settings/account" element={<AccountPage />} />
 
           {/* Google login */}
           <Route path="/google-success" element={<GoogleSuccessPage />} />
