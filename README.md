@@ -17,6 +17,7 @@ A full-stack e-commerce web application built using React, Node.js, Express, and
 
 
 
+
 ## Technology Stack
 
 ### Frontend
@@ -91,9 +92,10 @@ JWT_SECRET=your_secret_key
 ```
 
 
+
 ## Author
 
-Salax Hussein
+Salah Hussein
 
 ## License
 
